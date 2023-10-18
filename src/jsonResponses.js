@@ -12,6 +12,17 @@ const respondJSONMeta = (request, response, status) => {
     response.end();
 }
 
+const notFound = (request, response) => {
+    const responseJSON = {
+        message: 'The page you are looking for was not found.',
+        id: 'notFound',
+    };
+
+    respondJSON(request, response, 404, responseJSON);
+};
+
+const notFoundMeta = (request, response) => respondJSONMeta(request, response, 404);
+
 //POST request, searches the alcohol requested by the user
 const searchAlc = async (request, response, body) => {
     const responseJSON = {};
@@ -75,16 +86,6 @@ const setReview = async (request, response, body) => {
 
     return respondJSONMeta(request, response, responseCode);
 }
-const notFound = (request, response) => {
-    const responseJSON = {
-        message: 'The page you are looking for was not found.',
-        id: 'notFound',
-    };
-
-    respondJSON(request, response, 404, responseJSON);
-};
-
-const notFoundMeta = (request, response) => respondJSONMeta(request, response, 404);
 
 const getRandomAlc = async (request, response) => {
     const url = 'https://www.thecocktaildb.com/api/json/v1/1/random.php';
