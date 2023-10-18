@@ -40,7 +40,7 @@ const searchAlc = async (request, response, body) => {
             if (jsonParse.drinks == null) {
                 notFound(request, response);
             } else {
-                respondJSON(request, response, 200, data);
+               return respondJSON(request, response, 200, data);
             }
         } else {
             notFound(request, response);
@@ -49,7 +49,7 @@ const searchAlc = async (request, response, body) => {
         notFound(request, response);
     }
 
-    respondJSONMeta(request, response, 200, responseJSON);
+   return respondJSONMeta(request, response, 200, responseJSON);
 }
 
 const getReviews = (request, response) => {
