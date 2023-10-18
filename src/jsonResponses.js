@@ -1,5 +1,3 @@
-const http = require('http');
-
 const reviews = {};
 
 const respondJSON = (request, response, status, object) => {
