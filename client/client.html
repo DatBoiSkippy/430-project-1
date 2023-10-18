@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Our simple HTTP server</title>
+  <link rel="stylesheet" type="text/css" href="/style.css">
+
+  <script>
+    const handleResponse = async (response, parseResponse) => {
+
+      const content = document.querySelector('#content');
+
+      //Logs out responses
+      switch (response.status) {
+        case 200:
+          console.log(`Success`);
+          break;
+        case 201:
+          console.log('Created');
+          break;
+        case 204:
+          console.log('Updated (No Content)');
+          return;
+        case 400:
+          console.log(`Bad Request`);
+          break;
+        case 404:
+          console.log(`Resource Not Found`);
+          break;
+        default:
+          console.log(`Error code not implemented by client.`);
+          break;
+      }
+      let obj = await response.json();
+
+      if (obj.message) {
+        alert(obj.message + " Error code: " + response.status);
+      }
+      if (parseResponse) {
+        content.innerHTML = "";
+
+        let jsonParse = JSON.parse(obj);
+
+        //For each loop goes through all of the drinks given to us by the JSON and creates sections for each
+        jsonParse.drinks.forEach(drink => {
+
+          //Container for the 'section'
+          const drinkSection = document.createElement("div");
+          drinkSection.className = "drink-section";
+
+          //Holds the image and name
+          const imgContainer = document.createElement("div");
+          imgContainer.className = "img-container";
+
+          const drinkName = document.createElement("p");
+          drinkName.className = "drink-name";
+          drinkName.innerHTML = JSON.stringify(drink.strDrink).replace(/\"/g, "");
+
+          const drinkImage = document.createElement("img");
+          drinkImage.className = "drink-image";
+          drinkImage.src = `${drink.strDrinkThumb}`;
+          drinkImage.alt = "Drink Image";
+
+          //Form where people will write their reviews
+          const reviewForm = document.createElement("form");
+          reviewForm.className = "review-form";
+          reviewForm.action = "/setReview";
+          reviewForm.method = "post"
+
+          const drinkReview = document.createElement("textarea");
+          drinkReview.className = "drink-review";
+          drinkReview.placeholder = "Write a review...";
+
+          const userName = document.createElement("input");
+          userName.className = "user-name";
+          userName.placeholder = "Insert Pen Name...";
+
+          const submitReview = document.createElement("input");
+          submitReview.type = "submit";
+          submitReview.value = "Submit";
+          
+          //Appends all the elements to their correct place
+          imgContainer.appendChild(drinkName);
+          imgContainer.appendChild(drinkImage);
+
+          reviewForm.appendChild(drinkReview);
+          reviewForm.appendChild(userName);
+          reviewForm.appendChild(submitReview);
+
+          //Adds an event to the submitReview button that will send the form data necessary to get reviews
+          const setReview = (e) => {
+            e.preventDefault();
+            const formData = `review=${drinkReview.value}&id=${drink.idDrink}&name=${drink.strDrink}&user=${userName.value}`;
+            sendPost(reviewForm, drinkReview, formData, handleReview);
+            return false;
+          }
+
+          reviewForm.addEventListener('submit', setReview)
+
+          drinkSection.appendChild(imgContainer);
+          drinkSection.appendChild(reviewForm);
+          content.appendChild(drinkSection);
+        });
+      }
+    };
+
+    //Gets the reviews set by other people
+    const handleReview = async (response, parseResponse) => {
+      const content = document.querySelector("#content");
+
+      let obj = await response.json();
+
+      //Reports on error, don't know if alerts are bad to use
+      if (response.status == 400) {
+        alert(obj.message + " Error code: " + response.status);
+      }
+      else 
+      if (parseResponse) {
+        let jsonParse = JSON.parse(JSON.stringify(obj));
+        if (jsonParse.reviews != null)
+          createDivs(jsonParse.reviews, content);
+      }
+    };
+
+    //My very bad attempt at parsing JSON recursively 
+    function createDivs(obj, parentElement) {
+      for (const key in obj) {
+        const div = document.createElement('div');
+
+        if (typeof obj[key] === 'object') {
+          // Create a header for the highest-level properties
+          const header = document.createElement('h2');
+
+          header.className = 'header-div';
+          header.textContent = key;
+
+          div.className = "div-container";
+          div.appendChild(header);
+          parentElement.appendChild(div);
+
+          // Recursively create divs for nested objects with a paragraph
+          createDivs(obj[key], div);
+        } else {
+          // Create a paragraph for objects deeper in the JSON
+          div.className = 'paragraph-div';
+          div.textContent = `${key}: ${obj[key]}`;
+          parentElement.appendChild(div);
+        }
+      }
+    }
+
+    //Used for get requests
+    const requestUpdate = async (form, handler) => {
+
+      const action = form.getAttribute('action');
+      const method = form.method;
+
+      let response = await fetch(action, {
+        method,
+        headers: {
+          'Accept': 'application/json'
+        },
+      });
+
+      handler(response, method === 'get');
+    }
+
+    //Modified for post requests such that multiple methods can use this
+    const sendPost = async (nameForm, field, data, handler) => {
+      const nameAction = nameForm.getAttribute('action');
+      const nameMethod = nameForm.getAttribute('method');
+
+      let response = await fetch(nameAction, {
+        method: nameMethod,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+        body: data,
+      });
+
+      handler(response, nameMethod === 'post');
+    }
+
+    const init = () => {
+
+      const searchForm = document.querySelector('#searchForm');
+      const searchField = searchForm.querySelector('#searchField');
+      const userForm = document.querySelector('#userForm');
+      const getReviews = document.querySelector('#getReviews');
+      const content = document.querySelector('#content');
+
+      const getAlc = (e) => {
+        e.preventDefault();
+        requestUpdate(userForm, handleResponse);
+        return false;
+      };
+
+      const getRev = (e) => {
+        e.preventDefault();
+        content.innerHTML = "";
+        requestUpdate(getReviews, handleReview);
+        return false;
+      };
+
+      const searchAlc = (e) => {
+        e.preventDefault();
+        const formData = `search=${searchField.value}`;
+        sendPost(searchForm, searchField, formData, handleResponse);
+        return false;
+      };
+
+      searchForm.addEventListener('submit', searchAlc);
+      userForm.addEventListener('submit', getAlc);
+      getReviews.addEventListener('submit', getRev);
+    };
+
+    window.onload = init;
+  </script>
+</head>
+
+<body>
+  <section id="top">
+    <h3>Alcohol DB </h3>
+    <form id="searchForm" action="/searchAlcohol" method="post">
+      <label for="Search">Enter any alcoholic beverage: </label>
+      <input id="searchField" type="text" />
+      <input type="submit" value="Search" />
+    </form>
+    <form id="userForm" action="/getAlcohol" method="get">
+      <input type="submit" value="Random Alcohol" />
+    </form>
+    <form id="getReviews" action="/getReviews" method="get">
+      <input type="submit" value="Look at Reviews" />
+    </form>
+  </section>
+  <section id="content">
+  </section>
+</body>
+
+</html>
