@@ -25,8 +25,7 @@ const parseBody = (request, response, handler) => {
 
     const body = [];
 
-    request.on('error', (err) => {
-        F
+    request.on('error', () => {
         response.statusCode = 400;
         response.end();
     });
