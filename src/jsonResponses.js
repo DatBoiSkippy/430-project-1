@@ -19,7 +19,7 @@ const searchAlc = async (request, response, body) => {
         responseJSON.message = 'Missing Search Parameter';
         return respondJSON(request, response, 400, responseJSON);
     }
-    const url = 'https://www.thecocktaildb.com/api/json/v1/1/search.php?s=' + bdy.search;
+    const url = 'https://www.thecocktaildb.com/api/json/v1/1/search.php?s=' + body.search;
 
     try {
         const res = await fetch(url);
