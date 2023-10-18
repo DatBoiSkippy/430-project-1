@@ -48,6 +48,8 @@ const searchAlc = async (request, response, body) => {
     } catch (error) {
         notFound(request, response);
     }
+
+    respondJSONMeta(request, response, 200, responseJSON);
 }
 
 const getReviews = (request, response) => {
